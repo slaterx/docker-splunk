@@ -94,24 +94,31 @@ EOF
     fi
 
     # Setup Indexer - ARGS should be <label> -secret <secret>
-    # http://docs.splunk.com/Documentation/Splunk/6.5.0/Forwarding/Deployaheavyforwarder    
+    # http://docs.splunk.com/Documentation/Splunk/6.5.0/Indexer/ConfiguremasterwithCLI
     if [[ -n ${SPLUNK_ENABLE_INDEXER} ]]; then
-      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk edit cluster-config -mode master -cluster_label ${SPLUNK_ENABLE_INDEXER_ARGS}"
+      echo "Enabling indexer..."
+      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk edit cluster-config -mode master -cluster_label ${SPLUNK_ENABLE_INDEXER_ARGS} -auth admin:changeme"
       __restart_required=true
+      echo "indexer enabled! Splunk will be restarted to apply the changes."
     fi
-    
+
     # Setup Search Head - ARGS should be https://<master_ip>:8089 -secret <secret>
-    # http://docs.splunk.com/Documentation/Splunk/6.5.0/Forwarding/Deployaheavyforwarder       
+    # http://docs.splunk.com/Documentation/Splunk/6.5.0/Indexer/ConfiguresearchheadwithCLI
     if [[ -n ${SPLUNK_ENABLE_SEARCHHEAD} ]]; then
-      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk edit cluster-config -mode searchhead -master_uri ${SPLUNK_ENABLE_SEARCHHEAD_ARGS}"
+      echo "Enabling search head and connecting it to indexer cluster..."
+      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk edit cluster-config -mode searchhead -master_uri ${SPLUNK_ENABLE_SEARCHHEAD_ARGS} -auth admin:changeme"
       __restart_required=true
+      echo "search head enabled! Splunk will be restarted to apply the changes."
     fi
-    
+
     # Setup Heavy Forwarder
     # http://docs.splunk.com/Documentation/Splunk/6.5.0/Forwarding/Deployaheavyforwarder
     if [[ -n ${SPLUNK_ENABLE_HEAVYFORWARDER} ]]; then
+      echo "Enabling heavy forwarder..."
       sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk enable app SplunkForwarder -auth admin:changeme"
-      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk enable splunk add forward-server ${SPLUNK_ENABLE_HEAVYFORWARDER_ARGS} -auth admin:changeme"
+      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk add forward-server ${SPLUNK_ENABLE_HEAVYFORWARDER_ARGS} -auth admin:changeme"
+      __restart_required=true
+      echo "heavy forwarder enabled! Splunk will be restarted to apply the changes."
     fi
 
     if [[ "$__restart_required" == "true" ]]; then
