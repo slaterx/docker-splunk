@@ -93,11 +93,20 @@ EOF
       __restart_required=true
     fi
 
-    # Setup Indexer - ARGS should be <label> -secret <secret>
+    # Setup Indexer Master - ARGS should be <label> -secret <secret>
     # http://docs.splunk.com/Documentation/Splunk/6.5.0/Indexer/ConfiguremasterwithCLI
-    if [[ -n ${SPLUNK_ENABLE_INDEXER} ]]; then
-      echo "Enabling indexer..."
-      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk edit cluster-config -mode master -cluster_label ${SPLUNK_ENABLE_INDEXER_ARGS} -auth admin:changeme"
+    if [[ -n ${SPLUNK_ENABLE_INDEXER_MASTER} ]]; then
+      echo "Enabling indexer master..."
+      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk edit cluster-config -mode master -cluster_label ${SPLUNK_ENABLE_INDEXER_MASTER_ARGS} -auth admin:changeme"
+      __restart_required=true
+      echo "indexer enabled! Splunk will be restarted to apply the changes."
+    fi
+
+    # Setup Indexer Peer - ARGS should be https://<master-hostname>:8089 -replication_port 9887 -secret <secret>
+    # http://docs.splunk.com/Documentation/Splunk/6.5.0/Indexer/ConfigurepeerswithCLI
+    if [[ -n ${SPLUNK_ENABLE_INDEXER_PEER} ]]; then
+      echo "Enabling indexer peer..."
+      sudo -HEu ${SPLUNK_USER} sh -c "${SPLUNK_HOME}/bin/splunk edit cluster-config -mode slave -master_uri ${SPLUNK_ENABLE_INDEXER_PEER_ARGS} -auth admin:changeme"
       __restart_required=true
       echo "indexer enabled! Splunk will be restarted to apply the changes."
     fi
